@@ -10,6 +10,9 @@
     <SyntheticProperty name="formSizePolicy" type="int" value="1"/>
     <SyntheticProperty name="generateCenter" type="boolean" value="false"/>
   </SyntheticProperties>
+  <Events>
+    <EventHandler event="windowClosing" listener="java.awt.event.WindowListener" parameters="java.awt.event.WindowEvent" handler="formWindowClosing"/>
+  </Events>
   <AuxValues>
     <AuxValue name="FormSettings_autoResourcing" type="java.lang.Integer" value="0"/>
     <AuxValue name="FormSettings_autoSetComponentName" type="java.lang.Boolean" value="false"/>
@@ -90,9 +93,9 @@
     </Component>
     <Component class="javax.swing.JTextField" name="AionPath">
       <Properties>
-        <Property name="editable" type="boolean" value="false" postCode="if (io.FolderUtils.getAionPathFromRegistry())"/>
-        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor" postCode="else&#xa;AionPath.setText(&quot;Aion couldnt be located&quot;);">
-          <Connection code="io.FolderUtils.getAionPath().toString()" type="code"/>
+        <Property name="editable" type="boolean" value="false" postCode="if (Config.BACKUPPATH.contains(&quot;none&quot;)){&#xa;    if (io.FolderUtils.getAionPathFromRegistry())"/>
+        <Property name="text" type="java.lang.String" editor="org.netbeans.modules.form.RADConnectionPropertyEditor" postCode="else&#xa;AionPath.setText(&quot;Aion couldnt be located&quot;);&#xa;}&#xa;else&#xa;AionPath.setText(Config.BACKUPPATH);">
+          <Connection code="Config.PATH" type="code"/>
         </Property>
         <Property name="cursor" type="java.awt.Cursor" editor="org.netbeans.modules.form.editors2.CursorEditor">
           <Color id="Default Cursor"/>
@@ -142,7 +145,7 @@
       </Properties>
       <AuxValues>
         <AuxValue name="JavaCodeGenerator_InitCodePost" type="java.lang.String" value="else if (language.contains(&quot;enu&quot;))&#xa;jTextField1.setText(&quot;US - English language detected&quot;);&#xa;else if (language.contains(&quot;deu&quot;))&#xa;jTextField1.setText(&quot;EU - Deutsch language detected&quot;);&#xa;else if (language.contains(&quot;esn&quot;))&#xa;jTextField1.setText(&quot;EU - Spanish language detected&quot;);&#xa;else if (language.contains(&quot;fra&quot;))&#xa;jTextField1.setText(&quot;EU - French language detected&quot;);&#xa;else if (language.contains(&quot;ita&quot;))&#xa;jTextField1.setText(&quot;EU - Italian language detected&quot;);&#xa;else if (language.contains(&quot;plk&quot;))&#xa;jTextField1.setText(&quot;EU - Polish language detected&quot;);&#xa;else if (language.contains(&quot;trk&quot;))&#xa;jTextField1.setText(&quot;EU - Turkish language detected&quot;);&#xa;else&#xa;jTextField1.setText(&quot;unknown language&quot;);"/>
-        <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="jTextField1.enableInputMethods(false);&#xa;jTextField1.setEditable(false);&#xa;String language = io.FolderUtils.getAionLanguage();&#xa;if (language.contains(&quot;eng&quot;))"/>
+        <AuxValue name="JavaCodeGenerator_InitCodePre" type="java.lang.String" value="jTextField1.enableInputMethods(false);&#xa;jTextField1.setEditable(false);&#xa;String language = Config.LANGUAGE;&#xa;if (language.contains(&quot;eng&quot;))"/>
       </AuxValues>
     </Component>
     <Component class="javax.swing.JButton" name="Options">

@@ -1,5 +1,6 @@
 package gui;
 
+import io.Config;
 import io.FolderUtils;
 import io.Datapack;
 import io.RePacker;
@@ -10,7 +11,6 @@ import java.awt.GraphicsDevice;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -88,6 +88,11 @@ public class MainFrame extends JFrame {
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Aion + (v0.1)");
         setResizable(false);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            public void windowClosing(java.awt.event.WindowEvent evt) {
+                formWindowClosing(evt);
+            }
+        });
 
         jButton1.setText("Change");
         jButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -98,10 +103,14 @@ public class MainFrame extends JFrame {
 
         AionPath.enableInputMethods(false);
         AionPath.setEditable(false);
-        if (FolderUtils.getAionPathFromRegistry())
-        AionPath.setText(FolderUtils.getAionPath().toString());
+        if (Config.BACKUPPATH.contains("none")){
+            if (io.FolderUtils.getAionPathFromRegistry())
+            AionPath.setText(Config.PATH);
+            else
+            AionPath.setText("Aion couldnt be located");
+        }
         else
-        AionPath.setText("Aion couldnt be located");
+        AionPath.setText(Config.BACKUPPATH);
         AionPath.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
         AionPath.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -132,7 +141,7 @@ public class MainFrame extends JFrame {
 
         jTextField1.enableInputMethods(false);
         jTextField1.setEditable(false);
-        String language = FolderUtils.getAionLanguage();
+        String language = Config.LANGUAGE;
         if (language.contains("eng"))
         jTextField1.setText("EU - English language detected");
         else if (language.contains("enu"))
@@ -216,7 +225,7 @@ public class MainFrame extends JFrame {
         FileFilter filter = new FileNameExtensionFilter("Aion Download Folder", "dat");
         fileChooser.setFileFilter(filter);
         if (FolderUtils.getAionPathFromRegistry()) {
-            fileChooser.setCurrentDirectory(new File(FolderUtils.getAionPath().toString()));
+            fileChooser.setCurrentDirectory(new File(Config.PATH));
         } else {
             fileChooser.setCurrentDirectory(new File("c:"));
         }
@@ -230,13 +239,13 @@ public class MainFrame extends JFrame {
             String path = selectedFile.getPath();
             File f = new File(path + list);
             if (f.exists()) {
-                FolderUtils.setAionPath(FileSystems.getDefault().getPath(path+"\\"));
-                this.AionPath.setText(FolderUtils.getAionPath().toString());
+                Config.PATH = path;
+                this.AionPath.setText(Config.PATH);
             } else if (path.toLowerCase().contains("aion")) {
                 f = new File(path + "\\download" + list);
                 if (f.exists()) {
-                    FolderUtils.setAionPath(FileSystems.getDefault().getPath(path + "\\download\\"));
-                    this.AionPath.setText(FolderUtils.getAionPath().toString());
+                    Config.PATH = path + "\\download";
+                    this.AionPath.setText(Config.PATH);
                 } else {
                     // show some error popup
                 }
@@ -249,31 +258,38 @@ public class MainFrame extends JFrame {
     }//GEN-LAST:event_jButton1ActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
-        if (FolderUtils.getAionPath() != null) {
-            String command = " -ip:79.110.83.80 -noweb -noauthgg -st -charnamemenu -ingamebrowser -webshopevent:6 -f2p -lbox -litelauncher -ncping -nosatab /SessKey:\"\" /CompanyID:\"11\" /ChannelGroupIndex:\"-1\"  -lang:ENG -litestep:9 ";
-            try {
-                ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-                PumpStreamHandler psh = new PumpStreamHandler(stdout);
-                DefaultExecutor exec = new DefaultExecutor();
-                exec.setStreamHandler(psh);
-                this.setVisible(false);
-                exec.execute(CommandLine.parse("cmd.exe /c wmic OS get OSArchitecture"));
-                int exit;
-                exec.setExitValues(new int[]{0, 1});
-                if (stdout.toString().contains("64")) {
-                    exit = exec.execute(CommandLine.parse(FolderUtils.getAionPath().toString() + "\\bin64\\aion.bin" + command));
-                } else {
-                    exit = exec.execute(CommandLine.parse(FolderUtils.getAionPath().toString() + "\\bin32\\aion.bin" + command));
-                }
-
-                this.setVisible(true);
-
-                System.out.println(exit);
-            } catch (IOException ex) {
-                Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
+        String path;
+        if (Config.BACKUPPATH.contains("none")) {
+            path = Config.PATH;
+        } else {
+            path = Config.BACKUPPATH;
+        }
+        String command = " -ip:79.110.83.80 -noweb -noauthgg -st -charnamemenu -ingamebrowser -webshopevent:6 -f2p -lbox -litelauncher -ncping -nosatab /SessKey:\"\" /CompanyID:\"11\" /ChannelGroupIndex:\"-1\"  -lang:"
+                + Config.LANGUAGE.toUpperCase()
+                + " -litestep:9 ";
+        try {
+            ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+            PumpStreamHandler psh = new PumpStreamHandler(stdout);
+            DefaultExecutor exec = new DefaultExecutor();
+            exec.setStreamHandler(psh);
+            this.setVisible(false);
+            exec.execute(CommandLine.parse("cmd.exe /c wmic OS get OSArchitecture"));
+            int exit;
+            exec.setExitValues(new int[]{0, 1});
+            if (stdout.toString().contains("64")) {
+                exit = exec.execute(CommandLine.parse(path + "\\bin64\\aion.bin" + command));
+            } else {
+                exit = exec.execute(CommandLine.parse(path + "\\bin32\\aion.bin" + command));
             }
 
+            this.setVisible(true);
+
+            System.out.println(exit);
+        } catch (IOException ex) {
+            Logger.getLogger(MainFrame.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+
     }//GEN-LAST:event_jButton2ActionPerformed
 
     private void AionPathActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_AionPathActionPerformed
@@ -297,10 +313,10 @@ public class MainFrame extends JFrame {
 
                 // refactor data.pak
                 Datapack.start();
-                
+
                 // Extract all encoded XML files
                 List<String> _unpakfiles = io.UnZipFiles.Start(_pakfiles, true, false);
-                
+
                 // Decode all XML files
                 io.Convert.Start(_unpakfiles);
 
@@ -329,6 +345,10 @@ public class MainFrame extends JFrame {
     private void OptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OptionsActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_OptionsActionPerformed
+
+    private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
+        Config.saveConfig();
+    }//GEN-LAST:event_formWindowClosing
 
     private static void setWindowPosition(JFrame window, int screen) {
         GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -387,7 +407,7 @@ public class MainFrame extends JFrame {
     // End of variables declaration//GEN-END:variables
 
     public static void main(String[] args) throws IOException, InterruptedException {
-
+        Config.load();
         getInstance();
     }
 }

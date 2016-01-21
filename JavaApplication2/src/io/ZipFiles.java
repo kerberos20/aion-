@@ -59,7 +59,7 @@ public class ZipFiles {
             if (!list.contains(folderpath)) {
                 _count++;
                 String aionpakpath;
-                String aionpath = FolderUtils.getAionPath().toString();
+                String aionpath = Config.PATH;
                 if (folder.isEmpty()){
                     String innerpath = folderpath.substring(folderpath.lastIndexOf("Unpak") + 5);
                     aionpakpath = aionpath + innerpath.substring(0, innerpath.length() - 1);

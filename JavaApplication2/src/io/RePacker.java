@@ -61,7 +61,7 @@ public class RePacker {
         List<String> files = new ArrayList<>();
 
         //read lines in your file all at once
-        List<String> allLines = Files.readAllLines(FileSystems.getDefault().getPath(FolderUtils.getAionPath() + fileName), Charset.forName("UTF-16"));
+        List<String> allLines = Files.readAllLines(FileSystems.getDefault().getPath(Config.PATH + fileName), Charset.forName("UTF-16"));
 
         for (int i = 0; i < allLines.size(); i++) {
 
@@ -75,7 +75,7 @@ public class RePacker {
                     && !allLines.get(i).contains("func_pet.pak")
                     && !allLines.get(i).contains("bin32.pak")) {
                 String str = allLines.get(i);
-                String file = FolderUtils.getAionPath() + "/" + str.substring(0, str.lastIndexOf(".pak") + 4);
+                String file = Config.PATH + "/" + str.substring(0, str.lastIndexOf(".pak") + 4);
                 File check = new File(file);
                 if (check.exists()) {
                     files.add(file);

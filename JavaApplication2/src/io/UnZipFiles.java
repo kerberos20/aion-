@@ -89,7 +89,7 @@ public class UnZipFiles {
                                     String path = zipfile.getName();
                                     String zipName = new File(zipfile.getName()).getName();
 
-                                    int val = path.toLowerCase().lastIndexOf(FolderUtils.getAionPath().toString()) + FolderUtils.getAionPath().toString().length()+1;
+                                    int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length()+1;
                                     File mk;
                                     if (entry.getName().contains("/")) {
                                         new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
@@ -145,7 +145,7 @@ public class UnZipFiles {
                     String path = zipfile.getName();
                     String zipName = new File(zipfile.getName()).getName();
 
-                    int val = path.toLowerCase().lastIndexOf(FolderUtils.getAionPath().toString()) + FolderUtils.getAionPath().toString().length()+1;
+                    int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length()+1;
                     File mk;
                     if (entry.getName().contains("/")) 
                         new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
