@@ -41,32 +41,74 @@ public class ZipFiles {
             return;
         }
         _count = 0;
-        if (zipFiles(files,""))
+        if (zipFiles(files, "")) {
             deleteFolder(new File(Temp));
-        
+        }
+
+    }
+
+    public static synchronized boolean zipFiles(String folder, String pak) {
+        File f = new File(exe);
+        try {
+            Files.copy(f.toPath(), FileSystems.getDefault().getPath(folder + "\\zip.exe"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        PumpStreamHandler psh = new PumpStreamHandler(stdout);
+        _exec.setStreamHandler(psh);
+        String aionpakpath = Config.PATH + pak + "\\";
+        try {
+            CommandLine cl = new CommandLine("start");
+            cl.addArgument("/D");
+            cl.addArgument(folder);
+            cl.addArgument("/B");
+            cl.addArgument("zip.exe");
+            cl.addArgument("-m");
+            cl.addArgument("-r");
+            cl.addArgument(aionpakpath);
+            cl.addArgument("*.*");
+            cl.addArgument("-x");
+            cl.addArgument("*.exe");
+            int i = 0;
+            while (i == _exec.execute(cl)) {
+                if (folder.isEmpty()) {
+                    checkCounter(UnZipFiles.getPakFiles().size());
+                }
+                File zip = new File(folder + "\\zip.exe");
+                zip.delete();
+                break;
+            }
+
+        } catch (IOException ex) {
+            Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
     }
 
     public static synchronized boolean zipFiles(List<String> files, String folder) throws InterruptedException {
 
         List<String> list = new ArrayList<>();
-        if (folder.isEmpty())
+        if (folder.isEmpty()) {
             checkCounter(UnZipFiles.getPakFiles().size());
+        }
         files.stream().forEach((file) -> {
-            
+
             String folderpath = Temp + file.substring(file.lastIndexOf("Unpak") + 5, file.lastIndexOf(".pak") + 4) + "\\";
-            if (!folder.isEmpty())
-                folderpath=folderpath+folder+"\\";
+            if (!folder.isEmpty()) {
+                folderpath = folderpath + folder + "\\";
+            }
             if (!list.contains(folderpath)) {
                 _count++;
                 String aionpakpath;
                 String aionpath = Config.PATH;
-                if (folder.isEmpty()){
+                if (folder.isEmpty()) {
                     String innerpath = folderpath.substring(folderpath.lastIndexOf("Unpak") + 5);
                     aionpakpath = aionpath + innerpath.substring(0, innerpath.length() - 1);
-                }
-                else
-                {
-                    aionpakpath = aionpath + "\\Data\\"+folder+"\\"+folder+".pak";
+                } else {
+                    aionpakpath = aionpath + "\\Data\\" + folder + "\\" + folder + ".pak";
                 }
                 list.add(folderpath);
 
@@ -92,32 +134,27 @@ public class ZipFiles {
                     cl.addArgument("*.*");
                     cl.addArgument("-x");
                     cl.addArgument("*.exe");
-                    System.out.println(folderpath);
-                    System.out.println(aionpakpath);
-                    System.out.println(cl.toString());
                     int i = 0;
-                    System.out.println(stdout.toString());
                     while (i == _exec.execute(cl)) {
-                        System.out.println(stdout.toString());
-                        if (folder.isEmpty())
+                        if (folder.isEmpty()) {
                             checkCounter(UnZipFiles.getPakFiles().size());
-                        File zip = new File(folderpath+"zip.exe");
+                        }
+                        File zip = new File(folderpath + "zip.exe");
                         zip.delete();
                         break;
                     }
-                    
+
                 } catch (IOException ex) {
                     System.out.println(stdout.toString());
                     Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
                 }
-
             }
         });
-        
+
         _count = 0;
         return true;
     }
-    
+
     public static void deleteFolder(File folder) {
         File[] files = folder.listFiles();
         if (files != null) { //some JVMs return null for empty dirs
@@ -149,10 +186,10 @@ public class ZipFiles {
         cl.addArgument("zip.exe");
         cl.addArgument("-d");
         cl.addArgument("data.pak");
-        cl.addArgument(target+"\\*.*");
+        cl.addArgument(target + "\\*.*");
         int i = 0;
         while (i == _exec.execute(cl)) {
-            File zip = new File(path+"zip.exe");
+            File zip = new File(path + "\\zip.exe");
             zip.delete();
             break;
         }

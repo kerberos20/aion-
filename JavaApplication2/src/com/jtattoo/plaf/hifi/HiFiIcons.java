@@ -241,7 +241,7 @@ public class HiFiIcons extends BaseIcons {
     private static class CheckBoxIcon implements Icon, UIResource, Serializable {
 
         private static final int GAP = 2;
-        private static final Icon SMALL_CHECK_ICON = new LazyImageIcon("hifi/icons/small/check_symbol_12x11.png");
+        private static final Icon SMALL_CHECK_ICON = new LazyImageIcon("icons/small/check_symbol_12x11.png");
         private static final Icon SMALL_CHECK_INVERSE_ICON = new LazyImageIcon("icons/small/check_symbol_10x10.png");
         private static final Icon SMALL_CHECK_DISABLED_ICON = new LazyImageIcon("icons/small/check_symbol_disabled_10x10.png");
         private static final Icon MEDIUM_CHECK_ICON = new LazyImageIcon("hifi/icons/medium/check_symbol_14x13.png");

@@ -3,7 +3,6 @@ package io;
 import gui.MainFrame;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.exec.DefaultExecutor;
 
@@ -19,6 +18,10 @@ public class Datapack {
     static List<String> _files;
     static int _count = 0;
     static boolean _fonts = false;
+    static boolean _ui = false;
+    static boolean _textures = false;
+    static boolean _strings = false;
+    static boolean _dialogs = false;
 
     private static synchronized void checkCounter() {
         int percentage = Math.round(100 * _count / _files.size() * 100) / 100;
@@ -41,10 +44,11 @@ public class Datapack {
             return;
         }
         _files.stream().forEach((f) -> {
-            //if (f == null){}
-            //fonts
             if (f.contains("fonts")) {
                 _fonts = true;
+            }
+            if (f.contains("ui")) {
+                _ui = true;
             }
         });
         String path = "\\l10n\\" + language + "\\Data\\Data.pak\\";
@@ -55,13 +59,26 @@ public class Datapack {
                 oldfont.delete();
             }
             // compress fonts from temp folder into aion font folder
-            List<String> list = new ArrayList<>();
-            list.add(Temp + path);
-            if (ZipFiles.zipFiles(list, "fonts")) {
+            if (ZipFiles.zipFiles(Temp + path + "\\fonts", "\\Data\\fonts")) {
                 // delete fonts from data.pak
                 ZipFiles.deleteFromDataPack(aionpath + datapath, "fonts");
             }
-
+        }
+        if (_ui)
+        {
+            // todo
+        }
+        if (_textures)
+        {
+            // todo
+        }
+        if (_strings)
+        {
+            // todo
+        }
+        if (_dialogs)
+        {
+            // todo
         }
         File zip = new File(aionpath + datapath + "zip.exe");
         ZipFiles.deleteFolder(new File(Temp));
