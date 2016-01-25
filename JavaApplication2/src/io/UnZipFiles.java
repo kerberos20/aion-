@@ -68,51 +68,54 @@ public class UnZipFiles {
 
             BufferedOutputStream dest;
             BufferedInputStream is;
-            try (ZipFile zipfile = new ZipFile(file, Charset.forName("Cp437"))) {
-                Enumeration<? extends ZipEntry> e = zipfile.entries();
-                ZipEntry entry;
+            File f = new File(file);
+            if (f.exists()) {
+                try (ZipFile zipfile = new ZipFile(file, Charset.forName("Cp437"))) {
+                    Enumeration<? extends ZipEntry> e = zipfile.entries();
+                    ZipEntry entry;
 
-                while (e.hasMoreElements()) {
-                    entry = e.nextElement();
+                    while (e.hasMoreElements()) {
+                        entry = e.nextElement();
 
-                    int count;
-                    byte data[] = new byte[BUFFER];
-                    if (xml || html) {
-                        if ((xml && entry.getName().contains(".xml")) || (html && entry.getName().contains(".html"))) {
-                            is = new BufferedInputStream(zipfile.getInputStream(entry));
-                            int[] XMLheader = new int[]{0x80};
-                            int[] HTMLheader = new int[]{0x81};
-                            try (InputStream stream = new BufferedInputStream(zipfile.getInputStream(entry))) {
-                                int read = stream.read();
-                                if (read == XMLheader[0] || read == HTMLheader[0]) {
+                        int count;
+                        byte data[] = new byte[BUFFER];
+                        if (xml || html) {
+                            if ((xml && entry.getName().contains(".xml")) || (html && entry.getName().contains(".html"))) {
+                                is = new BufferedInputStream(zipfile.getInputStream(entry));
+                                int[] XMLheader = new int[]{0x80};
+                                int[] HTMLheader = new int[]{0x81};
+                                try (InputStream stream = new BufferedInputStream(zipfile.getInputStream(entry))) {
+                                    int read = stream.read();
+                                    if (read == XMLheader[0] || read == HTMLheader[0]) {
 
-                                    String path = zipfile.getName();
-                                    String zipName = new File(zipfile.getName()).getName();
+                                        String path = zipfile.getName();
+                                        String zipName = new File(zipfile.getName()).getName();
 
-                                    int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length()+1;
-                                    File mk;
-                                    if (entry.getName().contains("/")) {
-                                        new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
-                                    }
-                                    mk = new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName);
-                                    mk.mkdirs();
-                                    File check = new File(mk.getPath() + "/" + entry.getName());
-                                    // if file alreadz exists
-                                    if (!check.exists()) {
-                                        dest = new BufferedOutputStream(new FileOutputStream(mk.getPath() + "/" + entry.getName()), BUFFER);
-                                        while ((count = is.read(data, 0, BUFFER)) != -1) {
-                                            dest.write(data, 0, count);
+                                        int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
+                                        File mk;
+                                        if (entry.getName().contains("/")) {
+                                            new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
                                         }
-                                        dest.flush();
-                                        dest.close();
-                                    }
-                                    addFile(mk.getPath() + "/" + entry.getName());
-                                    addPak(path);
+                                        mk = new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName);
+                                        mk.mkdirs();
+                                        File check = new File(mk.getPath() + "/" + entry.getName());
+                                        // if file alreadz exists
+                                        if (!check.exists()) {
+                                            dest = new BufferedOutputStream(new FileOutputStream(mk.getPath() + "/" + entry.getName()), BUFFER);
+                                            while ((count = is.read(data, 0, BUFFER)) != -1) {
+                                                dest.write(data, 0, count);
+                                            }
+                                            dest.flush();
+                                            dest.close();
+                                        }
+                                        addFile(mk.getPath() + "/" + entry.getName());
+                                        addPak(path);
 
+                                    }
+                                    stream.close();
                                 }
-                                stream.close();
+                                is.close();
                             }
-                            is.close();
                         }
                     }
                 }
@@ -125,7 +128,7 @@ public class UnZipFiles {
         }
         return null;
     }
-    
+
     public static synchronized List<String> unZip(String file) {
         try {
             _datapackfiles = new ArrayList<>();
@@ -145,11 +148,12 @@ public class UnZipFiles {
                     String path = zipfile.getName();
                     String zipName = new File(zipfile.getName()).getName();
 
-                    int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length()+1;
+                    int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
                     File mk;
-                    if (entry.getName().contains("/")) 
+                    if (entry.getName().contains("/")) {
                         new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
-                    
+                    }
+
                     mk = new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName);
                     mk.mkdirs();
                     File check = new File(mk.getPath() + "/" + entry.getName());
@@ -164,16 +168,16 @@ public class UnZipFiles {
                     }
                     addDataPackFile(mk.getPath() + "/" + entry.getName());
                     is.close();
-                }   
+                }
             }
             return getDataPackFiles();
         } catch (Exception e) {
             Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
         }
         return null;
-        
+
     }
-        
+
     private static void addFile(String file) {
         _newfiles.add(file);
     }
@@ -189,14 +193,15 @@ public class UnZipFiles {
     }
 
     private static void addDataPackFile(String file) {
-        if (file != null)
+        if (file != null) {
             _datapackfiles.add(file);
+        }
     }
-    
+
     private synchronized static List<String> getDataPackFiles() {
         return _datapackfiles;
     }
-        
+
     public synchronized static List<String> getPakFiles() {
         return _pakfiles;
     }

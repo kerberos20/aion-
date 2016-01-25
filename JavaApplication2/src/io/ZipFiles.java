@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
@@ -47,6 +48,48 @@ public class ZipFiles {
 
     }
 
+    public static synchronized boolean updateFile(String file, String pak) {
+        File f = new File(exe);
+        if (file.contains("/"));
+        file = file.replace("/", "\\");
+        String path = file.substring(0, file.lastIndexOf("\\"));
+        try {
+            File n = new File(path + "\\zip.exe");
+            if (!n.exists())
+                Files.copy(f.toPath(), FileSystems.getDefault().getPath(path + "\\zip.exe"), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        PumpStreamHandler psh = new PumpStreamHandler(stdout);
+        _exec.setStreamHandler(psh);
+
+        try {
+            CommandLine cl = new CommandLine("start");
+            cl.addArgument("/D");
+            cl.addArgument(path);
+            cl.addArgument("/B");
+            cl.addArgument("zip.exe");
+            cl.addArgument("-m");
+            cl.addArgument(pak);
+            cl.addArgument(file.substring(file.lastIndexOf("\\") + 1));
+            int i = 0;
+            while (i == _exec.execute(cl)) {
+                if (path.isEmpty()) {
+                    checkCounter(UnZipFiles.getPakFiles().size());
+                }
+                break;
+            }
+
+        } catch (IOException ex) {
+            System.out.println(stdout.toString());
+            Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
+    }
+
     public static synchronized boolean zipFiles(String folder, String pak) {
         File f = new File(exe);
         try {
@@ -58,7 +101,7 @@ public class ZipFiles {
         ByteArrayOutputStream stdout = new ByteArrayOutputStream();
         PumpStreamHandler psh = new PumpStreamHandler(stdout);
         _exec.setStreamHandler(psh);
-        String aionpakpath = Config.PATH + pak + "\\";
+        String aionpakpath = Config.PATH + pak;
         try {
             CommandLine cl = new CommandLine("start");
             cl.addArgument("/D");
@@ -71,6 +114,7 @@ public class ZipFiles {
             cl.addArgument("*.*");
             cl.addArgument("-x");
             cl.addArgument("*.exe");
+            System.out.println(cl);
             int i = 0;
             while (i == _exec.execute(cl)) {
                 if (folder.isEmpty()) {

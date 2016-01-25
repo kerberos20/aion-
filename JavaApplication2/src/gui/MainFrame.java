@@ -370,7 +370,7 @@ public class MainFrame extends JFrame {
                 // Decode all pak files
                 RePacker.start();
 
-                // refactor data.pak
+                // l10n folder
                 Datapack.start();
 
                 // Extract all encoded XML files
@@ -379,13 +379,14 @@ public class MainFrame extends JFrame {
                 // Decode all XML files
                 io.Convert.Start(_unpakfiles);
 
-                // zip back plain XML and HTML files
+                // zip back decoded XML files
                 io.ZipFiles.start(_unpakfiles);
 
                 this.jButton1.setEnabled(true);
                 this.jButton2.setEnabled(true);
                 this.jButton3.setEnabled(true);
                 this.Options.setEnabled(true);
+                this._bar1.setString("Completed");
 
                 for (Component c : this.getComponents()) {
                     c.setCursor(Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR));
@@ -403,7 +404,6 @@ public class MainFrame extends JFrame {
 
     private void OptionsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OptionsActionPerformed
         Options.setEnabled(false);
-                //.setIcon(Options.getRolloverSelectedIcon());
         jCheckBox1.setVisible(true);
         jCheckBox2.setVisible(true);
         jCheckBox3.setVisible(true);
