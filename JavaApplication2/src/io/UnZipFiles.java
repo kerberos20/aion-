@@ -1,11 +1,14 @@
 package io;
 
 import gui.MainFrame;
+import static io.RePacker.CORES;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.*;
@@ -27,106 +30,106 @@ public class UnZipFiles {
         MainFrame.getInstance().updateBar1("Extracting XML files ", percentage);
     }
 
-    public static List<String> Start(List<String> files, boolean xml, boolean html) {
-        try {
-            _zipfiles = files;
-            _newfiles = new ArrayList<>();
-            _pakfiles = new ArrayList<>();
-            _xml = xml;
-            _html = html;
+    private static class Runner implements Runnable {
 
-            Runnable runner1 = () -> {
-                for (int i = 0; i < getFiles().size(); i += 2) {
-                    unZip(getFiles().get(i), _xml, _html);
-                    checkCounter();
-                }
-            };
-            Runnable runner2 = () -> {
-                for (int i = 1; i < getFiles().size(); i += 2) {
-                    unZip(getFiles().get(i), _xml, _html);
-                    checkCounter();
-                }
-            };
-            Thread t1 = new Thread(runner1, "Unzip1");
-            Thread t2 = new Thread(runner2, "Unzip2");
+        private final String file;
+        private final Boolean xml;
+        private final Boolean html;
 
-            // unzip xml and html files  and use 2 threads to speed things up
-            t1.start();
-            t2.start();
-            t1.join();
-            t2.join();
-            _count = 0;
-            return _newfiles;
-        } catch (InterruptedException ex) {
-            Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, ex);
+        public Runner(String file, Boolean xml, Boolean html) {
+            this.file = file;
+            this.xml = xml;
+            this.html = html;
         }
-        return null;
-    }
 
-    public static synchronized List<String> unZip(String file, boolean xml, boolean html) {
-        try {
+        @Override
+        public void run() {
+            _count++;
+            unZipMe();
+            checkCounter();
+        }
 
-            BufferedOutputStream dest;
-            BufferedInputStream is;
-            File f = new File(file);
-            if (f.exists()) {
-                try (ZipFile zipfile = new ZipFile(file, Charset.forName("Cp437"))) {
-                    Enumeration<? extends ZipEntry> e = zipfile.entries();
-                    ZipEntry entry;
+        private synchronized void unZipMe() {
+            try {
+                BufferedOutputStream dest;
+                BufferedInputStream is;
+                File f = new File(file);
+                if (f.exists()) {
+                    try (ZipFile zipfile = new ZipFile(file, Charset.forName("Cp437"))) {
+                        Enumeration<? extends ZipEntry> e = zipfile.entries();
+                        ZipEntry entry;
 
-                    while (e.hasMoreElements()) {
-                        entry = e.nextElement();
+                        while (e.hasMoreElements()) {
+                            entry = e.nextElement();
 
-                        int count;
-                        byte data[] = new byte[BUFFER];
-                        if (xml || html) {
-                            if ((xml && entry.getName().contains(".xml")) || (html && entry.getName().contains(".html"))) {
-                                is = new BufferedInputStream(zipfile.getInputStream(entry));
-                                int[] XMLheader = new int[]{0x80};
-                                int[] HTMLheader = new int[]{0x81};
-                                try (InputStream stream = new BufferedInputStream(zipfile.getInputStream(entry))) {
-                                    int read = stream.read();
-                                    if (read == XMLheader[0] || read == HTMLheader[0]) {
+                            int count;
+                            byte data[] = new byte[BUFFER];
+                            if (xml || html) {
+                                if ((xml && entry.getName().contains(".xml")) || (html && entry.getName().contains(".html"))) {
+                                    is = new BufferedInputStream(zipfile.getInputStream(entry));
+                                    int[] XMLheader = new int[]{0x80};
+                                    int[] HTMLheader = new int[]{0x81};
+                                    try (InputStream stream = new BufferedInputStream(zipfile.getInputStream(entry))) {
+                                        int read = stream.read();
+                                        if (read == XMLheader[0] || read == HTMLheader[0]) {
 
-                                        String path = zipfile.getName();
-                                        String zipName = new File(zipfile.getName()).getName();
+                                            String path = zipfile.getName();
+                                            String zipName = new File(zipfile.getName()).getName();
 
-                                        int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
-                                        File mk;
-                                        if (entry.getName().contains("/")) {
-                                            new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
-                                        }
-                                        mk = new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName);
-                                        mk.mkdirs();
-                                        File check = new File(mk.getPath() + "/" + entry.getName());
-                                        // if file alreadz exists
-                                        if (!check.exists()) {
-                                            dest = new BufferedOutputStream(new FileOutputStream(mk.getPath() + "/" + entry.getName()), BUFFER);
-                                            while ((count = is.read(data, 0, BUFFER)) != -1) {
-                                                dest.write(data, 0, count);
+                                            int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
+                                            File mk;
+                                            if (entry.getName().contains("/")) {
+                                                new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName + "/" + entry.getName().substring(0, entry.getName().lastIndexOf("/"))).mkdirs();
                                             }
-                                            dest.flush();
-                                            dest.close();
-                                        }
-                                        addFile(mk.getPath() + "/" + entry.getName());
-                                        addPak(path);
+                                            mk = new File(Temp + path.substring(val, path.lastIndexOf(zipName)) + "/" + zipName);
+                                            mk.mkdirs();
+                                            File check = new File(mk.getPath() + "/" + entry.getName());
+                                            // if file alreadz exists
+                                            if (!check.exists()) {
+                                                dest = new BufferedOutputStream(new FileOutputStream(mk.getPath() + "/" + entry.getName()), BUFFER);
+                                                while ((count = is.read(data, 0, BUFFER)) != -1) {
+                                                    dest.write(data, 0, count);
+                                                }
+                                                dest.flush();
+                                                dest.close();
+                                            }
+                                            addFile(mk.getPath() + "/" + entry.getName());
+                                            addPak(path);
 
+                                        }
+                                        stream.close();
                                     }
-                                    stream.close();
+                                    is.close();
                                 }
-                                is.close();
                             }
                         }
                     }
                 }
-                _count++;
-            }
-            return getFiles();
 
-        } catch (Exception e) {
-            Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
+            } catch (Exception e) {
+                Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
+            }
         }
-        return null;
+    }
+
+    public static List<String> Start(List<String> files, boolean xml, boolean html) {
+        _zipfiles = files;
+        _newfiles = new ArrayList<>();
+        _pakfiles = new ArrayList<>();
+        checkCounter();
+        ExecutorService executor = Executors.newFixedThreadPool(CORES);
+
+        for (int i = 0; i < files.size(); i++) {
+            executor.execute(new Runner(files.get(i), xml, html));
+        }
+
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
+
+        MainFrame.getInstance().updateBar1("Extracting XML files ", 100);
+        _count = 0;
+        return _newfiles;
     }
 
     public static synchronized List<String> unZip(String file) {
@@ -178,11 +181,11 @@ public class UnZipFiles {
 
     }
 
-    private static void addFile(String file) {
+    private static synchronized void addFile(String file) {
         _newfiles.add(file);
     }
 
-    private static void addPak(String file) {
+    private static synchronized void addPak(String file) {
         if (!_pakfiles.contains(file)) {
             _pakfiles.add(file);
         }
@@ -192,7 +195,7 @@ public class UnZipFiles {
         return _zipfiles;
     }
 
-    private static void addDataPackFile(String file) {
+    private static synchronized void addDataPackFile(String file) {
         if (file != null) {
             _datapackfiles.add(file);
         }

@@ -41,7 +41,9 @@ public class RePacker {
 
         @Override
         public void run() {
+            _count++;
             pak2zip();
+            checkCounter();
         }
 
         private synchronized void pak2zip() {
@@ -63,8 +65,6 @@ public class RePacker {
                         zip2pak(zip);
                     }
                 }
-                _count++;
-                checkCounter();
             } catch (Exception e) {
                 Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
             }
@@ -86,8 +86,8 @@ public class RePacker {
         }
 
         long timeEnd = Calendar.getInstance().getTimeInMillis();
+        MainFrame.getInstance().updateBar1("Repacking game files ", 100);
         _count = 0;
-        System.out.println("converted in " + (timeEnd - timeStart) + " ms");
     }
 
     private static List<String> readFile(String fileName) throws IOException {

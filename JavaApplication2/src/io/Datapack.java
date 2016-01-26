@@ -9,6 +9,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,10 +37,12 @@ public class Datapack {
 
     private static synchronized void checkCounter() {
         int percentage = Math.round(100 * _count / _files.size() * 100) / 100;
-        MainFrame.getInstance().updateBar1("Altering Data.pak files ", percentage);
+        MainFrame.getInstance().updateBar1("Altering l10n folder ", percentage);
     }
 
     public static synchronized void start() throws InterruptedException, IOException {
+        long timeStart = Calendar.getInstance().getTimeInMillis();
+        
         String aionpath = Config.PATH;
         String language = Config.LANGUAGE;
         String l10n = "\\l10n\\" + language;
@@ -48,7 +51,7 @@ public class Datapack {
 
         // unzip datapack
         _files = UnZipFiles.unZip(aionpath + datapak);
-
+        checkCounter();
         // refactor it a bit
         String oldfonts = aionpath + "\\data\\fonts";
         File oldfont = new File(oldfonts + "\\fonts.pak");
@@ -85,7 +88,6 @@ public class Datapack {
         if (oldtextures.exists()) {
             String texturesfolder = aionpath + "\\Textures\\";
             String temptexturesfolder = Temp + l10n + "\\Textures\\Textures.pak\\";
-            System.out.println(temptexturesfolder);
             _textures = UnZipFiles.unZip(oldtextures.getAbsolutePath());
             _textures.stream().forEach((f) -> {
                 f = f.toLowerCase();
@@ -112,7 +114,6 @@ public class Datapack {
                         || f.contains("worldmap_globe_bb.dds")
                         || !f.contains(".")) {
                     // ignore
-                    System.out.println("ignored " + f);
                 } else if (f.contains("loading")) {
                     // move files
                     String loading = "loading";
@@ -198,5 +199,10 @@ public class Datapack {
                 new File(Temp));
         zip.delete();
         _files = null;
+        
+        long timeEnd = Calendar.getInstance().getTimeInMillis();
+        MainFrame.getInstance().updateBar1("Altering l10n folder ", 100);
+        _count = 0;
+        System.out.println("optimised l10n in " + (timeEnd - timeStart) + " ms");
     }
 }

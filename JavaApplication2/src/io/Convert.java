@@ -11,7 +11,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,7 +41,9 @@ public class Convert {
 
         @Override
         public void run() {
+            _count++;
             convertMe();
+            checkCounter();
         }
 
         private synchronized void convertMe() {
@@ -50,8 +51,7 @@ public class Convert {
             InputStream input;
             OutputStream output;
             File f = new File(file);
-            _count++;
-            checkCounter();
+            
             if (!f.exists()) {
 
             }
@@ -122,7 +122,6 @@ public class Convert {
     public static void Start(List<String> files) throws InterruptedException {
         _files = files;
         if (files.size() > 0) {
-            long timeStart = Calendar.getInstance().getTimeInMillis();
             checkCounter();
             ExecutorService executor = Executors.newFixedThreadPool(CORES);
             for (int i = 0; i < _files.size(); i++) {
@@ -133,9 +132,8 @@ public class Convert {
             while (!executor.isTerminated()) {
             }
 
-            long timeEnd = Calendar.getInstance().getTimeInMillis();
+            MainFrame.getInstance().updateBar1("Decoding XML files ", 100);
             _count = 0;
-            System.out.println("converted in " + (timeEnd - timeStart) + " ms");
         }
     }
 }
