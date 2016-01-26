@@ -29,7 +29,8 @@ public class WinRegistry {
     private static Method regQueryInfoKey;
     private static Method regEnumKeyEx;
 
-    private WinRegistry() {
+    private WinRegistry() {}
+    static{
         try {
             REGOPENKEY = USERCLASS.getDeclaredMethod("WindowsRegOpenKey",
                     new Class[]{int.class, byte[].class, int.class});
