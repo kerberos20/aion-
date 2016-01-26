@@ -5,6 +5,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.apache.commons.exec.CommandLine;
@@ -17,10 +19,11 @@ import org.apache.commons.exec.PumpStreamHandler;
  */
 public class RePacker {
 
+    static final int CORES = Runtime.getRuntime().availableProcessors();
     static String _path;
     private static List<String> _files;
     static DefaultExecutor _exec = new DefaultExecutor();
-    static String exe = "pak2zip.dll ";
+    static final String EXE = "pak2zip.dll ";
     private static int _count = 0;
 
     private static synchronized void checkCounter() {
@@ -28,32 +31,63 @@ public class RePacker {
         MainFrame.getInstance().updateBar1("Repacking game files ", percentage);
     }
 
+    private static class Runner implements Runnable {
+
+        private final String file;
+
+        public Runner(String file) {
+            this.file = file;
+        }
+
+        @Override
+        public void run() {
+            pak2zip();
+        }
+
+        private synchronized void pak2zip() {
+            try {
+                // if not already ZIP file, decompress it
+                if (!testZip(file)) {
+                    String zip = file.replace(".pak", ".zip");
+                    if (!testZip(zip)) {
+                        // todo later check for file if exists
+                        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+                        PumpStreamHandler psh = new PumpStreamHandler(stdout);
+                        _exec.setStreamHandler(psh);
+                        int exit = _exec.execute(CommandLine.parse(EXE + file + " " + zip));
+                        while (exit == 0) {
+                            zip2pak(zip);
+                            break;
+                        }
+                    } else {
+                        zip2pak(zip);
+                    }
+                }
+                _count++;
+                checkCounter();
+            } catch (Exception e) {
+                Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+    }
+
     public static void start() throws IOException, InterruptedException {
 
         _files = readFile("/FileInfoMap_AION-LIVE.dat");
-        Runnable runner1 = () -> {
-            for (int i = 0; i < _files.size(); i += 2) {
-                pak2zip(_files.get(i));
-                checkCounter();
-            }
-        };
-        Runnable runner2 = () -> {
-            for (int i = 1; i < _files.size(); i += 2) {
-                pak2zip(_files.get(i));
-                checkCounter();
-            }
-        };
-        Thread t1 = new Thread(runner1, "Repack1");
-        Thread t2 = new Thread(runner2, "Repack2");
-
         MainFrame.setPakFiles(_files);
+        long timeStart = Calendar.getInstance().getTimeInMillis();
+        checkCounter();
+        ExecutorService executor = Executors.newFixedThreadPool(CORES);
+        for (int i = 0; i < _files.size(); i++) {
+            executor.execute(new Runner(_files.get(i)));
+        }
+        executor.shutdown();
+        while (!executor.isTerminated()) {
+        }
 
-        t1.start();
-        t2.start();
-        t1.join();
-        t2.join();
+        long timeEnd = Calendar.getInstance().getTimeInMillis();
         _count = 0;
-
+        System.out.println("converted in " + (timeEnd - timeStart) + " ms");
     }
 
     private static List<String> readFile(String fileName) throws IOException {
@@ -101,33 +135,6 @@ public class RePacker {
             }
             ins.close();
             return true;
-        }
-    }
-
-    public static synchronized void pak2zip(String file) {
-        try {
-            String pak = file;
-
-            // if not already ZIP file, decompress it
-            if (!testZip(pak)) {
-                String zip = pak.replace(".pak", ".zip");
-                if (!testZip(zip)) {
-                    // todo later check for file if exists
-                    ByteArrayOutputStream stdout = new ByteArrayOutputStream();
-                    PumpStreamHandler psh = new PumpStreamHandler(stdout);
-                    _exec.setStreamHandler(psh);
-                    int exit = _exec.execute(CommandLine.parse(exe + pak + " " + zip));
-                    while (exit == 0) {
-                        zip2pak(zip);
-                        break;
-                    }
-                } else {
-                    zip2pak(zip);
-                }
-            }
-            _count++;
-        } catch (Exception e) {
-            Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
         }
     }
 
