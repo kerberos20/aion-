@@ -137,11 +137,15 @@ public class UnZipFiles {
             _datapackfiles = new ArrayList<>();
             BufferedOutputStream dest;
             BufferedInputStream is;
+            int counter = 0;
             try (ZipFile zipfile = new ZipFile(file, Charset.forName("Cp437"))) {
                 Enumeration<? extends ZipEntry> e = zipfile.entries();
                 ZipEntry entry;
+                String zipName = new File(zipfile.getName()).getName();
+                MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", 0);
 
                 while (e.hasMoreElements()) {
+                    counter++;
                     entry = e.nextElement();
 
                     int count;
@@ -149,7 +153,7 @@ public class UnZipFiles {
                     is = new BufferedInputStream(zipfile.getInputStream(entry));
 
                     String path = zipfile.getName();
-                    String zipName = new File(zipfile.getName()).getName();
+                    
 
                     int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
                     File mk;
@@ -170,9 +174,13 @@ public class UnZipFiles {
                         dest.close();
                     }
                     addDataPackFile(mk.getPath() + "/" + entry.getName());
+                    int percentage = Math.round(100 * counter / zipfile.size() * 100) / 100;
+                    MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", percentage);
                     is.close();
                 }
+                MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", 100);
             }
+            
             return getDataPackFiles();
         } catch (Exception e) {
             Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);

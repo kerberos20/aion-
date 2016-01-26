@@ -86,10 +86,12 @@ public class Datapack {
         String textures = aionpath + l10n + "\\Textures\\";
         File oldtextures = new File(textures + "Textures.pak");
         if (oldtextures.exists()) {
+            MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", 0);
             String texturesfolder = aionpath + "\\Textures\\";
             String temptexturesfolder = Temp + l10n + "\\Textures\\Textures.pak\\";
             _textures = UnZipFiles.unZip(oldtextures.getAbsolutePath());
             _textures.stream().forEach((f) -> {
+                updateCounter();
                 f = f.toLowerCase();
                 File test = new File(f);
                 if (test.exists() && test.isDirectory()) {
@@ -182,9 +184,12 @@ public class Datapack {
                     } else {
                         ZipFiles.updateFile(f, texturesfolder + ui + "ui.pak");
                     }
+                    int percentage = Math.round(100 * _count / _textures.size() * 100) / 100;
+                    MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", percentage);
                 }
             });
             oldtextures.delete();
+            MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", 100);
         }
 
         if (_strings) {
@@ -193,16 +198,17 @@ public class Datapack {
         if (_dialogs) {
             // todo
         }
-        File zip = new File(aionpath + data + "zip.exe");
 
-        ZipFiles.deleteFolder(
-                new File(Temp));
-        zip.delete();
+        ZipFiles.deleteFolder(new File(Temp));
         _files = null;
         
         long timeEnd = Calendar.getInstance().getTimeInMillis();
         MainFrame.getInstance().updateBar1("Altering l10n folder ", 100);
         _count = 0;
         System.out.println("optimised l10n in " + (timeEnd - timeStart) + " ms");
+    }
+
+    private static void updateCounter() {
+        _count ++;
     }
 }
