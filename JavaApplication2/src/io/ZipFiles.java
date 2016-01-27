@@ -1,6 +1,7 @@
 package io;
 
 import gui.MainFrame;
+import static io.FolderUtils.deleteFolder;
 import static io.RePacker.CORES;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -169,20 +170,6 @@ public class ZipFiles {
             return false;
         }
         return true;
-    }
-
-    public static void deleteFolder(File folder) {
-        File[] files = folder.listFiles();
-        if (files != null) { //some JVMs return null for empty dirs
-            for (File f : files) {
-                if (f.isDirectory()) {
-                    deleteFolder(f);
-                } else {
-                    f.delete();
-                }
-            }
-        }
-        folder.delete();
     }
 
     public static synchronized void deleteFromDataPack(String path, String target) throws IOException {

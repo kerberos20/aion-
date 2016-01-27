@@ -1,6 +1,7 @@
 package io;
 
 import gui.MainFrame;
+import static io.FolderUtils.deleteFolder;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -42,6 +43,8 @@ public class Datapack {
 
     public static synchronized void start() throws InterruptedException, IOException {
         long timeStart = Calendar.getInstance().getTimeInMillis();
+        long timeTemp1;
+        long timeTemp2;
         
         String aionpath = Config.PATH;
         String language = Config.LANGUAGE;
@@ -51,7 +54,12 @@ public class Datapack {
 
         // unzip datapack
         _files = UnZipFiles.unZip(aionpath + datapak);
+        timeTemp2 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("unziped data.pak in " + (timeTemp2 - timeStart) + " ms");
         checkCounter();
+        timeTemp1 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("counter check in " + (timeTemp1 - timeTemp2) + " ms");
+        
         // refactor it a bit
         String oldfonts = aionpath + "\\data\\fonts";
         File oldfont = new File(oldfonts + "\\fonts.pak");
@@ -59,6 +67,8 @@ public class Datapack {
             System.out.println("no datapak?");
             return;
         }
+        
+        timeTemp2 = Calendar.getInstance().getTimeInMillis();
         _files.stream().forEach((f) -> {
             if (f.contains("fonts")) {
                 _fonts = true;
@@ -67,6 +77,10 @@ public class Datapack {
             }
         });
 
+
+        timeTemp1 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("file stream in " + (timeTemp1 - timeTemp2) + " ms");
+        timeTemp2 = Calendar.getInstance().getTimeInMillis();
         if (_fonts) {
             // delete old korean fonts from aion folder
             if (oldfont.exists()) {
@@ -78,10 +92,12 @@ public class Datapack {
                 ZipFiles.deleteFromDataPack(aionpath + data, "fonts");
             }
         }
+        timeTemp1 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("fonts done in " + (timeTemp1 - timeTemp2) + " ms");
         if (_ui) {
             // todo
         }
-
+        timeTemp2 = Calendar.getInstance().getTimeInMillis();
         //textures
         String textures = aionpath + l10n + "\\Textures\\";
         File oldtextures = new File(textures + "Textures.pak");
@@ -157,7 +173,6 @@ public class Datapack {
 
                                 if (Files.isRegularFile(filePath)) {
                                     try {
-                                        BufferedInputStream is;
                                         try (ZipFile zipfile = new ZipFile(filePath.toFile(), Charset.forName("Cp437"))) {
                                             Enumeration<? extends ZipEntry> e = zipfile.entries();
                                             ZipEntry entry;
@@ -191,15 +206,18 @@ public class Datapack {
             oldtextures.delete();
             MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", 100);
         }
-
+        timeTemp1 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("textures done in " + (timeTemp1 - timeTemp2) + " ms");
         if (_strings) {
             // todo
         }
         if (_dialogs) {
             // todo
         }
-
-        ZipFiles.deleteFolder(new File(Temp));
+        timeTemp2 = Calendar.getInstance().getTimeInMillis();
+        deleteFolder(new File(Temp));
+        timeTemp1 = Calendar.getInstance().getTimeInMillis();
+        System.out.println("deleted temp folder in " + (timeTemp1 - timeTemp2) + " ms");
         _files = null;
         
         long timeEnd = Calendar.getInstance().getTimeInMillis();
