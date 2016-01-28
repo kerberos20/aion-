@@ -142,7 +142,7 @@ public class UnZipFiles {
                 Enumeration<? extends ZipEntry> e = zipfile.entries();
                 ZipEntry entry;
                 String zipName = new File(zipfile.getName()).getName();
-                MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", 0);
+                MainFrame.getInstance().updateBar1("Decompresing " + zipName + " ", 0);
 
                 while (e.hasMoreElements()) {
                     counter++;
@@ -153,7 +153,6 @@ public class UnZipFiles {
                     is = new BufferedInputStream(zipfile.getInputStream(entry));
 
                     String path = zipfile.getName();
-                    
 
                     int val = path.toLowerCase().lastIndexOf(Config.PATH) + Config.PATH.length() + 1;
                     File mk;
@@ -175,12 +174,12 @@ public class UnZipFiles {
                     }
                     addDataPackFile(mk.getPath() + "/" + entry.getName());
                     int percentage = Math.round(100 * counter / zipfile.size() * 100) / 100;
-                    MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", percentage);
+                    MainFrame.getInstance().updateBar1("Decompresing " + zipName + " ", percentage);
                     is.close();
                 }
-                MainFrame.getInstance().updateBar1("Decompresing "+zipName+" ", 100);
+                MainFrame.getInstance().updateBar1("Decompresing " + zipName + " ", 100);
             }
-            
+
             return getDataPackFiles();
         } catch (Exception e) {
             Logger.getLogger(RePacker.class.getName()).log(Level.SEVERE, null, e);
@@ -190,7 +189,9 @@ public class UnZipFiles {
     }
 
     private static synchronized void addFile(String file) {
-        _newfiles.add(file);
+        if (!_newfiles.contains(file)) {
+            _newfiles.add(file);
+        }
     }
 
     private static synchronized void addPak(String file) {
@@ -204,7 +205,7 @@ public class UnZipFiles {
     }
 
     private static synchronized void addDataPackFile(String file) {
-        if (file != null) {
+        if (file != null && !_datapackfiles.contains(file)) {
             _datapackfiles.add(file);
         }
     }

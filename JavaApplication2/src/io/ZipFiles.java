@@ -56,6 +56,44 @@ public class ZipFiles {
 
     }
 
+    public static synchronized boolean updateFile(List<String> files, String pak) {
+        String file = files.get(0);
+        if (file.contains("/")) {
+            file = file.replace("/", "\\");
+        }
+        String path = file.substring(0, file.lastIndexOf("\\"));
+        ByteArrayOutputStream stdout = new ByteArrayOutputStream();
+        PumpStreamHandler psh = new PumpStreamHandler(stdout);
+        EXEC.setStreamHandler(psh);
+        try {
+            CommandLine cl = new CommandLine("start");
+            cl.addArgument("/D");
+            cl.addArgument(path);
+            cl.addArgument("/B");
+            cl.addArgument(ZIP.getAbsolutePath());
+            cl.addArgument("-m");
+            cl.addArgument(pak);
+            files.stream().map((f) -> {
+                if (f.contains("/")) {
+                    f = f.replace("/", "\\");
+                }
+                return f;
+            }).forEach((f) -> {
+                cl.addArgument(f.substring(f.lastIndexOf("\\") + 1));
+            });
+
+            while (0 == EXEC.execute(cl)) {
+                break;
+            }
+            
+        } catch (IOException ex) {
+            System.out.println(stdout);
+            Logger.getLogger(ZipFiles.class.getName()).log(Level.SEVERE, null, ex);
+            return false;
+        }
+        return true;
+    }
+
     public static synchronized boolean updateFile(String file, String pak) {
         if (file.contains("/")) {
             file = file.replace("/", "\\");

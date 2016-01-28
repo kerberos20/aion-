@@ -53,7 +53,7 @@ public class Convert {
             File f = new File(file);
             
             if (!f.exists()) {
-
+               return;
             }
             if (file.endsWith(".xml")) {
                 conv = new XmlConverter();

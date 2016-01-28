@@ -2,17 +2,19 @@ package io;
 
 import gui.MainFrame;
 import static io.FolderUtils.deleteFolder;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
@@ -35,6 +37,7 @@ public class Datapack {
     static boolean _ui = false;
     static boolean _strings = false;
     static boolean _dialogs = false;
+    private static Map<String, List<String>> _zonemaps = new ConcurrentHashMap<>(1);
 
     private static synchronized void checkCounter() {
         int percentage = Math.round(100 * _count / _files.size() * 100) / 100;
@@ -43,7 +46,7 @@ public class Datapack {
 
     public static synchronized void start() throws InterruptedException, IOException {
         long timeStart = Calendar.getInstance().getTimeInMillis();
-        
+
         String aionpath = Config.PATH;
         String language = Config.LANGUAGE;
         String l10n = "\\l10n\\" + language;
@@ -53,7 +56,7 @@ public class Datapack {
         // unzip datapack
         _files = UnZipFiles.unZip(aionpath + datapak);
         checkCounter();
-        
+
         // refactor it a bit
         String oldfonts = aionpath + "\\data\\fonts";
         File oldfont = new File(oldfonts + "\\fonts.pak");
@@ -61,7 +64,7 @@ public class Datapack {
             System.out.println("no datapak?");
             return;
         }
-        
+
         _files.stream().forEach((f) -> {
             if (f.contains("fonts")) {
                 _fonts = true;
@@ -155,35 +158,47 @@ public class Datapack {
                         ZipFiles.updateFile(f, texturesfolder + hitnumber + "hit_number.pak");
                     } else if (f.contains("zonemap")) {
                         final String zonemap = ui + "zonemap\\";
-                        try {
-                            final String file = f;
-                            Files.walk(Paths.get(texturesfolder + zonemap)).forEach(filePath -> {
+
+                        File file = new File(texturesfolder + zonemap);
+                        File[] files = file.listFiles();
+                        for (File pak : files) {
+                            if (pak.getName().endsWith(".pak")) {
+                                Path filePath = pak.toPath();
 
                                 if (Files.isRegularFile(filePath)) {
                                     try {
-                                        try (ZipFile zipfile = new ZipFile(filePath.toFile(), Charset.forName("Cp437"))) {
-                                            Enumeration<? extends ZipEntry> e = zipfile.entries();
-                                            ZipEntry entry;
+                                        ZipFile zipfile = new ZipFile(filePath.toFile(), Charset.forName("Cp437"));
+                                        Enumeration<? extends ZipEntry> e = zipfile.entries();
+                                        ZipEntry entry;
 
-                                            while (e.hasMoreElements()) {
-                                                entry = e.nextElement();
-                                                
-                                                if (entry.getName().contains(file.substring(file.lastIndexOf("/"))))
+                                        while (e.hasMoreElements()) {
+                                            entry = e.nextElement();
+
+                                            if (entry.getName().contains(f.substring(f.lastIndexOf("/") + 1))) {
+                                                String pakname = filePath.toString().contains("/") ? filePath.toString().replaceAll("/", "\\") : filePath.toString();
+                                                List<String> zonetextures = _zonemaps.get(pakname);
+                                                if (zonetextures != null)
                                                 {
-                                                    ZipFiles.updateFile(file, filePath.toString().contains("/") ? filePath.toString().replaceAll("/", "\\") : filePath.toString());
-                                                    break;
+                                                    zonetextures.add(f);
                                                 }
+                                                else
+                                                {
+                                                    _zonemaps.put(pakname, new ArrayList<>());
+                                                    zonetextures = _zonemaps.get(pakname);
+                                                    zonetextures.add(f);
+                                                }
+                                                break;
                                             }
                                         }
+
                                     } catch (IOException ex) {
                                         Logger.getLogger(Datapack.class.getName()).log(Level.SEVERE, null, ex);
                                     }
 
                                 }
-                            });
-                        } catch (IOException ex) {
-                            Logger.getLogger(Datapack.class.getName()).log(Level.SEVERE, null, ex);
+                            }
                         }
+
                     } else {
                         ZipFiles.updateFile(f, texturesfolder + ui + "ui.pak");
                     }
@@ -191,6 +206,10 @@ public class Datapack {
                     MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", percentage);
                 }
             });
+            for (String s : _zonemaps.keySet())
+            {
+                ZipFiles.updateFile(_zonemaps.get(s), s);
+            }
             oldtextures.delete();
             MainFrame.getInstance().updateBar1("Moving textures from l10n folder ", 100);
         }
@@ -204,7 +223,7 @@ public class Datapack {
 
         deleteFolder(new File(Temp));
         _files = null;
-        
+
         long timeEnd = Calendar.getInstance().getTimeInMillis();
         MainFrame.getInstance().updateBar1("Altering l10n folder ", 100);
         _count = 0;
@@ -212,6 +231,6 @@ public class Datapack {
     }
 
     private static void updateCounter() {
-        _count ++;
+        _count++;
     }
 }
